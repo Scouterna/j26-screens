@@ -12,7 +12,7 @@ document.querySelector('#app').innerHTML = `
     <img src="${viteLogo}" class="vite" alt="Vite logo" />
   </div>
   <div>
-    <h1>Get started</h1>
+    <h1>Get started - Krabban style</h1>
     <p>Edit <code>src/main.js</code> and save to test <code>HMR</code></p>
   </div>
   <button id="counter" type="button" class="counter"></button>
