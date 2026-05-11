@@ -10,7 +10,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN npm run build -- --base=/_services/screens/
 
 FROM nginx:alpine AS runner
 COPY --from=builder /app/dist /usr/share/nginx/html
