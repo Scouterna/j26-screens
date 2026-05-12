@@ -17,6 +17,10 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --screen-shell-padding: var(--spacing-5);
+  --screen-stage-ratio-width: 9;
+  --screen-stage-ratio-height: 16;
+  --screen-stage-ratio: 9 / 16;
   --screen-surface: var(--color-white);
   --screen-surface-strong: var(--color-white);
   --screen-radius: 2rem;
@@ -62,17 +66,34 @@ a {
   min-height: 100svh;
   display: grid;
   place-items: center;
-  padding: var(--spacing-5);
+  padding: var(--screen-shell-padding);
 }
 
 .screen-stage {
-  width: min(100%, calc((100svh - 5rem) * 9 / 16));
-  aspect-ratio: 9 / 16;
+  width: min(
+    100%,
+    calc(
+      (100svh - (var(--screen-shell-padding) * 2))
+      * var(--screen-stage-ratio-width)
+      / var(--screen-stage-ratio-height)
+    )
+  );
+  max-width: calc(100svw - (var(--screen-shell-padding) * 2));
+  max-height: calc(100svh - (var(--screen-shell-padding) * 2));
+  aspect-ratio: var(--screen-stage-ratio);
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   min-height: 0;
   overflow: hidden;
   background: var(--color-white);
+}
+
+@media (orientation: landscape) {
+  :root {
+    --screen-stage-ratio-width: 16;
+    --screen-stage-ratio-height: 9;
+    --screen-stage-ratio: 16 / 9;
+  }
 }
 
 .screen-stage__content {
@@ -299,8 +320,8 @@ a {
 }
 
 @media (max-width: 900px) {
-  .screen-shell {
-    padding: var(--spacing-3);
+  :root {
+    --screen-shell-padding: var(--spacing-3);
   }
 
   .screen-stage {
