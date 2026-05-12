@@ -17,10 +17,6 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --screen-shell-padding: var(--spacing-5);
-  --screen-stage-ratio-width: 9;
-  --screen-stage-ratio-height: 16;
-  --screen-stage-ratio: 9 / 16;
   --screen-surface: var(--color-white);
   --screen-surface-strong: var(--color-white);
   --screen-radius: 2rem;
@@ -66,34 +62,17 @@ a {
   min-height: 100svh;
   display: grid;
   place-items: center;
-  padding: var(--screen-shell-padding);
 }
 
 .screen-stage {
-  width: min(
-    100%,
-    calc(
-      (100svh - (var(--screen-shell-padding) * 2))
-      * var(--screen-stage-ratio-width)
-      / var(--screen-stage-ratio-height)
-    )
-  );
-  max-width: calc(100svw - (var(--screen-shell-padding) * 2));
-  max-height: calc(100svh - (var(--screen-shell-padding) * 2));
-  aspect-ratio: var(--screen-stage-ratio);
+  width: min(100svw, calc(100svh * 9 / 16));
+  max-height: 100svh;
+  aspect-ratio: 9 / 16;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   min-height: 0;
   overflow: hidden;
   background: var(--color-white);
-}
-
-@media (orientation: landscape) {
-  :root {
-    --screen-stage-ratio-width: 16;
-    --screen-stage-ratio-height: 9;
-    --screen-stage-ratio: 16 / 9;
-  }
 }
 
 .screen-stage__content {
@@ -317,29 +296,6 @@ a {
   margin: var(--spacing-4) 0 0;
   font: var(--type-body-xl);
   color: var(--color-text-base);
-}
-
-@media (max-width: 900px) {
-  :root {
-    --screen-shell-padding: var(--spacing-3);
-  }
-
-  .screen-stage {
-    width: 100%;
-  }
-
-  .screen-block--rich-text,
-  .screen-block--empty,
-  .state-card,
-  .state-card__panel {
-    padding: var(--spacing-6);
-  }
-
-  .rich-text p,
-  .rich-text li,
-  .rich-text blockquote {
-    font: var(--type-body-xl);
-  }
 }
 
 @keyframes layout-enter {
