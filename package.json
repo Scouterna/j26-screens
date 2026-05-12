@@ -12,6 +12,9 @@
     "vite": "^8.0.12"
   },
   "dependencies": {
-    "@payloadcms/richtext-lexical": "^3.84.1"
+    "@fontsource-variable/source-sans-3": "^5.2.9",
+    "@payloadcms/richtext-lexical": "^3.84.1",
+    "@scouterna/design-tokens": "^0.0.6",
+    "modern-normalize": "^3.0.1"
   }
 }

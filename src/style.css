@@ -1,4 +1,16 @@
-@import url('https://unpkg.com/@scouterna/design-tokens@0.0.6/dist/tokens.css');
+@import "modern-normalize/modern-normalize.css";
+@import "@scouterna/design-tokens/tokens.css";
+@import "@fontsource-variable/source-sans-3";
+
+:root {
+  font-family: "Source Sans 3 Variable", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  color: var(--color-text-base);
+}
+
+/* Everything above this line is base styles for Scouterna branding */
 
 :root {
   font-synthesis: none;
