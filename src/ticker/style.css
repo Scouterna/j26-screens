@@ -1,0 +1,68 @@
+@import url('https://unpkg.com/@scouterna/design-tokens@0.0.6/dist/tokens.css');
+
+:root {
+  --screen-ticker-height: 100px;
+  --screen-ticker-duration: 22s;
+}
+
+.screen-ticker {
+  height: var(--screen-ticker-height);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background-color: var(--color-blue-800);
+  background-image: url('../assets/bg_w_slide_left.png');
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: 100% 100%;
+}
+
+.screen-ticker__marquee {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  min-width: 100%;
+  animation: ticker-scroll var(--screen-ticker-duration) linear infinite;
+  will-change: transform;
+}
+
+.screen-ticker__group {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: var(--spacing-5);
+  padding-inline-end: var(--spacing-5);
+}
+
+.screen-ticker__text,
+.screen-ticker__divider {
+  color: var(--color-text-brand-inverse);
+  white-space: nowrap;
+  position: relative;
+  top: 0.75em;
+}
+
+.screen-ticker__text {
+  font: var(--type-label-xl);
+  font-weight: 700;
+}
+
+.screen-ticker__divider {
+  font: var(--type-label-lg);
+}
+
+@media (max-width: 900px) {
+  .screen-ticker__text {
+    font: var(--type-label-lg);
+  }
+}
+
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}

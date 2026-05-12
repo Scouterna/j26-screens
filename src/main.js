@@ -1,60 +1,197 @@
+import defaultSlidesUrl from './assets/j26_default.json?url'
 import './style.css'
-import javascriptLogo from './assets/javascript.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import { setupCounter } from './counter.js'
+import { normalizeSlides } from './lib/screen-content.js'
+import { renderSlideLayout } from './layouts/index.js'
+import { createTicker } from './ticker/index.js'
 
-document.querySelector('#app').innerHTML = `
-<section id="center">
-  <div class="hero">
-    <img src="${heroImg}" class="base" width="170" height="179">
-    <img src="${javascriptLogo}" class="framework" alt="JavaScript logo"/>
-    <img src="${viteLogo}" class="vite" alt="Vite logo" />
-  </div>
-  <div>
-    <h1>Get started - Krabban style</h1>
-    <p>Edit <code>src/main.js</code> and save to test <code>HMR</code></p>
-  </div>
-  <button id="counter" type="button" class="counter"></button>
-</section>
+const DEFAULT_SLUG = 'j26_default'
+const SAME_ORIGIN_API_BASE = '/_services/cms/api/screens'
+const REMOTE_API_BASE = 'https://app.dev.j26.se/_services/cms/api/screens'
 
-<div class="ticks"></div>
+const app = document.querySelector('#app')
 
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#documentation-icon"></use></svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank">
-          <img class="logo" src="${viteLogo}" alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
-          <img class="button-icon" src="${javascriptLogo}" alt="">
-          Learn more
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#social-icon"></use></svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li><a href="https://github.com/vitejs/vite" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#github-icon"></use></svg>GitHub</a></li>
-      <li><a href="https://chat.vite.dev/" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#discord-icon"></use></svg>Discord</a></li>
-      <li><a href="https://x.com/vite_js" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#x-icon"></use></svg>X.com</a></li>
-      <li><a href="https://bsky.app/profile/vite.dev" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#bluesky-icon"></use></svg>Bluesky</a></li>
-    </ul>
-  </div>
-</section>
+const state = {
+  slides: [],
+  slideIndex: 0,
+  rotationTimer: 0,
+}
 
-<div class="ticks"></div>
-<section id="spacer"></section>
-`
+let stageElement
 
-setupCounter(document.querySelector('#counter'))
+boot()
+
+async function boot() {
+  const runtime = getRuntimeConfig()
+
+  renderShell()
+  renderStageState({
+    title: 'Hämtar skärminnehåll',
+    body: 'Försöker läsa slide-data från CMS och bygga upp layouts dynamiskt.',
+  })
+
+  try {
+    const slides = await loadSlides(runtime)
+
+    if (!slides.length) {
+      throw new Error('API:et returnerade inga slides.')
+    }
+
+    state.slides = slides
+    state.slideIndex = 0
+
+    renderActiveSlide()
+    startRotation()
+  } catch (error) {
+    renderError(error, runtime.slug)
+  }
+}
+
+async function loadSlides(runtime) {
+  if (runtime.slug === DEFAULT_SLUG) {
+    const payload = await fetchSlides(defaultSlidesUrl, 'standardinnehållet')
+    return normalizeSlides(payload)
+  }
+
+  let lastError = null
+
+  for (const apiBase of runtime.apiBases) {
+    const endpoint = buildEndpoint(apiBase, runtime.slug)
+
+    try {
+      const payload = await fetchSlides(endpoint, 'endpointen')
+      return normalizeSlides(payload)
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  throw lastError ?? new Error('Kunde inte läsa API-data.')
+}
+
+function getRuntimeConfig() {
+  const params = new URLSearchParams(window.location.search)
+  const explicitApiBase = sanitizeApiBase(
+    params.get('apiBase')?.trim() || import.meta.env.VITE_SCREENS_API_BASE?.trim(),
+  )
+  const slug = params.get('slug')?.trim() || DEFAULT_SLUG
+
+  if (explicitApiBase) {
+    return {
+      slug,
+      apiBases: [explicitApiBase],
+    }
+  }
+
+  return {
+    slug,
+    apiBases: isLocalHost() ? [SAME_ORIGIN_API_BASE, REMOTE_API_BASE] : [SAME_ORIGIN_API_BASE],
+  }
+}
+
+function isLocalHost() {
+  return ['localhost', '127.0.0.1'].includes(window.location.hostname)
+}
+
+function sanitizeApiBase(value) {
+  if (!value) {
+    return ''
+  }
+
+  return value.replace(/\/+$/, '')
+}
+
+function buildEndpoint(apiBase, slug) {
+  return `${sanitizeApiBase(apiBase)}/${encodeURIComponent(slug)}/content`
+}
+
+async function fetchSlides(resource, sourceLabel) {
+  const response = await fetch(resource, {
+    headers: {
+      accept: 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Kunde inte läsa ${sourceLabel} (${response.status} ${response.statusText}).`)
+  }
+
+  return response.json()
+}
+
+function renderShell() {
+  const shell = document.createElement('div')
+  const stage = document.createElement('div')
+  const main = document.createElement('main')
+
+  shell.className = 'screen-shell'
+  stage.className = 'screen-stage'
+  main.className = 'screen-stage__content'
+  main.dataset.role = 'stage'
+
+  stage.append(main, createTicker())
+  shell.append(stage)
+  app.replaceChildren(shell)
+
+  stageElement = main
+}
+
+function renderActiveSlide() {
+  const slide = state.slides[state.slideIndex]
+
+  if (!slide) {
+    return
+  }
+
+  stageElement.replaceChildren(renderSlideLayout(slide))
+}
+
+function startRotation() {
+  window.clearTimeout(state.rotationTimer)
+
+  const slide = state.slides[state.slideIndex]
+
+  if (!slide) {
+    return
+  }
+
+  if (state.slides.length < 2) {
+    return
+  }
+
+  state.rotationTimer = window.setTimeout(() => {
+    state.slideIndex = (state.slideIndex + 1) % state.slides.length
+    renderActiveSlide()
+    startRotation()
+  }, slide.durationSeconds * 1000)
+}
+
+function renderStageState({ title, body }) {
+  const section = document.createElement('section')
+  const panel = document.createElement('div')
+  const eyebrow = document.createElement('p')
+  const titleElement = document.createElement('h1')
+  const bodyElement = document.createElement('p')
+
+  section.className = 'state-card'
+  panel.className = 'state-card__panel'
+  eyebrow.className = 'state-card__eyebrow'
+  titleElement.className = 'state-card__title'
+  bodyElement.className = 'state-card__body'
+
+  eyebrow.textContent = 'Screen renderer'
+  titleElement.textContent = title
+  bodyElement.textContent = body
+
+  panel.append(eyebrow, titleElement, bodyElement)
+  section.append(panel)
+  stageElement.replaceChildren(section)
+}
+
+function renderError(error, slug) {
+  const message = error instanceof Error ? error.message : 'Okänt fel vid hämtning av innehåll.'
+
+  renderStageState({
+    title: 'Kunde inte läsa innehåll',
+    body: `${message} Kontrollera slug ${slug} eller peka om.`,
+  })
+}
