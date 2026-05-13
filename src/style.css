@@ -97,6 +97,11 @@ a {
   animation: layout-enter 360ms ease;
 }
 
+.screen-shell[data-animations='off'] .screen-layout,
+.screen-shell[data-animations='off'] .screen-block {
+  animation: none;
+}
+
 .screen-layout--rows {
   grid-template-rows: repeat(var(--track-count), minmax(0, 1fr));
 }

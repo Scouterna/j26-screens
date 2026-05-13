@@ -23,7 +23,7 @@ boot()
 async function boot() {
   const runtime = getRuntimeConfig()
 
-  renderShell()
+  renderShell(runtime)
   renderStageState({
     title: 'Hämtar skärminnehåll',
     body: 'Försöker läsa slide-data från CMS och bygga upp layouts dynamiskt.',
@@ -74,17 +74,20 @@ function getRuntimeConfig() {
     params.get('apiBase')?.trim() || import.meta.env.VITE_SCREENS_API_BASE?.trim(),
   )
   const slug = params.get('slug')?.trim() || DEFAULT_SLUG
+  const animationsEnabled = params.get('animation')?.trim().toLowerCase() !== 'off'
 
   if (explicitApiBase) {
     return {
       slug,
       apiBases: [explicitApiBase],
+      animationsEnabled,
     }
   }
 
   return {
     slug,
     apiBases: isLocalHost() ? [SAME_ORIGIN_API_BASE, REMOTE_API_BASE] : [SAME_ORIGIN_API_BASE],
+    animationsEnabled,
   }
 }
 
@@ -118,12 +121,13 @@ async function fetchSlides(resource, sourceLabel) {
   return response.json()
 }
 
-function renderShell() {
+function renderShell(runtime) {
   const shell = document.createElement('div')
   const stage = document.createElement('div')
   const main = document.createElement('main')
 
   shell.className = 'screen-shell'
+  shell.dataset.animations = runtime.animationsEnabled ? 'on' : 'off'
   stage.className = 'screen-stage'
   main.className = 'screen-stage__content'
   main.dataset.role = 'stage'
