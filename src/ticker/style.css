@@ -1,5 +1,5 @@
 :root {
-  --screen-ticker-height: 100px;
+  --screen-ticker-height: 128px;
   --screen-ticker-duration: 22s;
 }
 
@@ -8,8 +8,8 @@
   display: flex;
   align-items: center;
   overflow: hidden;
-  background-color: var(--color-blue-800);
-  background-image: url('../assets/bg_w_slide_left.png');
+  background-color: var(--color-white);
+  background-image: url('../assets/bg_w_slide_single.svg');
   background-repeat: no-repeat;
   background-position: center top;
   background-size: 100% 100%;
@@ -37,22 +37,15 @@
   color: var(--color-text-brand-inverse);
   white-space: nowrap;
   position: relative;
-  top: 0.75em;
+  top: 0.65em;
 }
 
 .screen-ticker__text {
-  font: var(--type-label-xl);
-  font-weight: 700;
+  font: 700 1.75rem/1.1 var(--fontfamily-sans);
 }
 
 .screen-ticker__divider {
-  font: var(--type-label-lg);
-}
-
-@media (max-width: 900px) {
-  .screen-ticker__text {
-    font: var(--type-label-lg);
-  }
+  font: 400 1.5rem/1.1 var(--fontfamily-sans);
 }
 
 @keyframes ticker-scroll {

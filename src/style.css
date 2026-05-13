@@ -160,25 +160,25 @@ a {
 }
 
 .rich-text h1 {
-  font: var(--type-heading-base);
+  font: 600 3.25rem/1.15 var(--fontfamily-sans);
 }
 
 .rich-text h2 {
-  font: var(--type-heading-sm);
+  font: 600 2.75rem/1.2 var(--fontfamily-sans);
 }
 
 .rich-text h3,
 .rich-text h4,
 .rich-text h5,
 .rich-text h6 {
-  font: var(--type-heading-xs);
+  font: 600 2.25rem/1.25 var(--fontfamily-sans);
 }
 
 .rich-text p,
 .rich-text li,
 .rich-text blockquote {
   margin: 0;
-  font: var(--type-body-2xl);
+  font: 400 2rem/1.45 var(--fontfamily-sans);
   color: var(--color-text-base);
 }
 
@@ -256,7 +256,7 @@ a {
 
 .empty-card__label {
   margin: 0;
-  font: var(--type-label-lg);
+  font: 600 2.5rem/1.1 var(--fontfamily-sans);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-text-brand-base);
@@ -264,7 +264,7 @@ a {
 
 .empty-card__copy {
   margin: var(--spacing-3) 0 0;
-  font: var(--type-body-lg);
+  font: 400 2rem/1.4 var(--fontfamily-sans);
   color: var(--color-text-base);
 }
 
@@ -285,7 +285,7 @@ a {
 
 .state-card__eyebrow {
   margin: 0 0 var(--spacing-3);
-  font: var(--type-label-sm);
+  font: 600 1.25rem/1.2 var(--fontfamily-sans);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-brand-base);
@@ -293,13 +293,13 @@ a {
 
 .state-card__title {
   margin: 0;
-  font: var(--type-heading-sm);
+  font: 600 2.5rem/1.2 var(--fontfamily-sans);
   color: var(--color-text-base);
 }
 
 .state-card__body {
   margin: var(--spacing-4) 0 0;
-  font: var(--type-body-xl);
+  font: 400 1.75rem/1.45 var(--fontfamily-sans);
   color: var(--color-text-base);
 }
 
