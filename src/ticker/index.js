@@ -1,7 +1,7 @@
 import './style.css'
 
 const DEFAULT_TICKER_TEXT =
-  'Välkommen till Jamboree26 • Kolla in vår hemsida för mer info: jamboree26.se • #jamboree26'
+  'Välkommen till Stormöte 6 • All info finns på Navet'
 
 export function createTicker(text = DEFAULT_TICKER_TEXT) {
   const ticker = document.createElement('aside')
