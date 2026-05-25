@@ -68,6 +68,7 @@ a {
   width: min(100svw, calc(100svh * 9 / 16));
   max-height: 100svh;
   aspect-ratio: 9 / 16;
+  position: relative;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   min-height: 0;
@@ -80,6 +81,40 @@ a {
   min-height: 0;
   display: grid;
   overflow: hidden;
+}
+
+.screen-stage__indicator {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--screen-ticker-height) + var(--spacing-3));
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  padding: 0.7rem 0.9rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 92%);
+  box-shadow: 0 0.35rem 0.9rem rgb(0 0 0 / 12%);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.screen-stage__indicator[hidden] {
+  display: none;
+}
+
+.screen-stage__indicator-dot {
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 2px solid var(--color-text-base);
+  border-radius: 999px;
+  background: var(--color-white);
+}
+
+.screen-stage__indicator-dot[data-active='true'] {
+  background: var(--color-text-base);
 }
 
 .screen-layout,

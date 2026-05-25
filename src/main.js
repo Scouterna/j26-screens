@@ -17,6 +17,7 @@ const state = {
 }
 
 let stageElement
+let slideIndicatorElement
 
 boot()
 
@@ -125,18 +126,23 @@ function renderShell(runtime) {
   const shell = document.createElement('div')
   const stage = document.createElement('div')
   const main = document.createElement('main')
+  const slideIndicator = document.createElement('div')
 
   shell.className = 'screen-shell'
   shell.dataset.animations = runtime.animationsEnabled ? 'on' : 'off'
   stage.className = 'screen-stage'
   main.className = 'screen-stage__content'
   main.dataset.role = 'stage'
+  slideIndicator.className = 'screen-stage__indicator'
+  slideIndicator.hidden = true
+  slideIndicator.setAttribute('aria-live', 'polite')
 
-  stage.append(main, createTicker())
+  stage.append(main, slideIndicator, createTicker())
   shell.append(stage)
   app.replaceChildren(shell)
 
   stageElement = main
+  slideIndicatorElement = slideIndicator
 }
 
 function renderActiveSlide() {
@@ -147,6 +153,7 @@ function renderActiveSlide() {
   }
 
   stageElement.replaceChildren(renderSlideLayout(slide))
+  renderSlideIndicator()
 }
 
 function startRotation() {
@@ -189,6 +196,39 @@ function renderStageState({ title, body }) {
   panel.append(eyebrow, titleElement, bodyElement)
   section.append(panel)
   stageElement.replaceChildren(section)
+  renderSlideIndicator()
+}
+
+function renderSlideIndicator() {
+  if (!slideIndicatorElement) {
+    return
+  }
+
+  if (state.slides.length < 2) {
+    slideIndicatorElement.hidden = true
+    slideIndicatorElement.replaceChildren()
+    slideIndicatorElement.removeAttribute('aria-label')
+    return
+  }
+
+  const fragment = document.createDocumentFragment()
+
+  slideIndicatorElement.hidden = false
+  slideIndicatorElement.setAttribute(
+    'aria-label',
+    `Slide ${state.slideIndex + 1} av ${state.slides.length}`,
+  )
+
+  for (let index = 0; index < state.slides.length; index += 1) {
+    const dot = document.createElement('span')
+
+    dot.className = 'screen-stage__indicator-dot'
+    dot.dataset.active = index === state.slideIndex ? 'true' : 'false'
+    dot.setAttribute('aria-hidden', 'true')
+    fragment.append(dot)
+  }
+
+  slideIndicatorElement.replaceChildren(fragment)
 }
 
 function renderError(error, slug) {
