@@ -19,6 +19,8 @@
   -moz-osx-font-smoothing: grayscale;
   --screen-viewport-width: 100vw;
   --screen-viewport-height: 100vh;
+  --screen-stage-aspect-width: 9;
+  --screen-stage-aspect-height: 16;
   --screen-surface: var(--color-white);
   --screen-surface-strong: var(--color-white);
   --screen-radius: 2rem;
@@ -74,15 +76,16 @@ a {
   width: 100%;
   min-height: var(--screen-viewport-height);
   display: grid;
-  place-items: center;
+  place-items: stretch;
   overflow: hidden;
 }
 
 .screen-stage {
-  width: min(var(--screen-viewport-width), calc(var(--screen-viewport-height) * 9 / 16));
-  max-width: 100%;
-  max-height: var(--screen-viewport-height);
-  aspect-ratio: 9 / 16;
+  width: var(--screen-viewport-width);
+  height: var(--screen-viewport-height);
+  max-width: none;
+  max-height: none;
+  aspect-ratio: auto;
   position: relative;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
@@ -91,11 +94,25 @@ a {
   background: var(--color-white);
 }
 
-@media (orientation: portrait) {
-  .screen-shell {
-    place-items: stretch;
-  }
+.screen-shell[data-stage-fit='contain'] {
+  place-items: center;
+}
 
+.screen-shell[data-stage-fit='contain'] .screen-stage {
+  width: min(
+    var(--screen-viewport-width),
+    calc(
+      var(--screen-viewport-height) * var(--screen-stage-aspect-width) /
+        var(--screen-stage-aspect-height)
+    )
+  );
+  height: auto;
+  max-width: 100%;
+  max-height: var(--screen-viewport-height);
+  aspect-ratio: var(--screen-stage-aspect-width) / var(--screen-stage-aspect-height);
+}
+
+@media (orientation: portrait) {
   .screen-stage {
     width: var(--screen-viewport-width);
     max-width: none;

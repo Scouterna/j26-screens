@@ -9,6 +9,7 @@ const SAME_ORIGIN_API_BASE = '/_services/cms/api/screens'
 const REMOTE_API_BASE = 'https://app.dev.j26.se/_services/cms/api/screens'
 const DEFAULT_REFRESH_MINUTES = 2
 const MIN_REFRESH_INTERVAL_MS = 15000
+const DEFAULT_STAGE_FIT = 'cover'
 
 const app = document.querySelector('#app')
 
@@ -130,6 +131,7 @@ function getRuntimeConfig() {
   const slug = params.get('slug')?.trim() || DEFAULT_SLUG
   const animationsEnabled = params.get('animation')?.trim().toLowerCase() !== 'off'
   const refreshIntervalMs = getRefreshIntervalMs(params, slug)
+  const stageFit = getStageFit(params)
 
   if (explicitApiBase) {
     return {
@@ -137,6 +139,7 @@ function getRuntimeConfig() {
       apiBases: [explicitApiBase],
       animationsEnabled,
       refreshIntervalMs,
+      stageFit,
     }
   }
 
@@ -145,6 +148,7 @@ function getRuntimeConfig() {
     apiBases: isLocalHost() ? [SAME_ORIGIN_API_BASE, REMOTE_API_BASE] : [SAME_ORIGIN_API_BASE],
     animationsEnabled,
     refreshIntervalMs,
+    stageFit,
   }
 }
 
@@ -187,6 +191,16 @@ function getNumber(value, fallback) {
   }
 
   return parsed
+}
+
+function getStageFit(params) {
+  const fit = params.get('stageFit')?.trim().toLowerCase()
+
+  if (fit === 'contain') {
+    return 'contain'
+  }
+
+  return DEFAULT_STAGE_FIT
 }
 
 function prioritizeApiBases(apiBases) {
@@ -332,6 +346,7 @@ function renderShell(runtime) {
 
   shell.className = 'screen-shell'
   shell.dataset.animations = runtime.animationsEnabled ? 'on' : 'off'
+  shell.dataset.stageFit = runtime.stageFit
   stage.className = 'screen-stage'
   main.className = 'screen-stage__content'
   main.dataset.role = 'stage'
