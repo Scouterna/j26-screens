@@ -7,6 +7,8 @@ import { createTicker } from './ticker/index.js'
 const DEFAULT_SLUG = 'j26_default'
 const SAME_ORIGIN_API_BASE = '/_services/cms/api/screens'
 const REMOTE_API_BASE = 'https://app.dev.j26.se/_services/cms/api/screens'
+const DEFAULT_REFRESH_MINUTES = 2
+const MIN_REFRESH_INTERVAL_MS = 15000
 
 const app = document.querySelector('#app')
 
@@ -14,6 +16,12 @@ const state = {
   slides: [],
   slideIndex: 0,
   rotationTimer: 0,
+  refreshTimer: 0,
+  refreshInFlight: false,
+  slidesSignature: '',
+  activeApiBase: '',
+  etag: '',
+  lastModified: '',
 }
 
 let stageElement
@@ -31,36 +39,81 @@ async function boot() {
   })
 
   try {
-    const slides = await loadSlides(runtime)
+    const initialLoad = await loadSlides(runtime)
+    const slides = initialLoad.slides
 
     if (!slides.length) {
       throw new Error('API:et returnerade inga slides.')
     }
 
     state.slides = slides
+    state.slidesSignature = createSlidesSignature(slides)
     state.slideIndex = 0
+    updateRefreshMetadata(initialLoad)
 
     renderActiveSlide()
     startRotation()
+    startRefreshLoop(runtime)
   } catch (error) {
     renderError(error, runtime.slug)
   }
 }
 
-async function loadSlides(runtime) {
+async function loadSlides(runtime, options = {}) {
   if (runtime.slug === DEFAULT_SLUG) {
-    const payload = await fetchSlides(defaultSlidesUrl, 'standardinnehållet')
-    return normalizeSlides(payload)
+    const result = await fetchSlides(defaultSlidesUrl, 'standardinnehållet')
+
+    if (result.notModified) {
+      return {
+        slides: state.slides,
+        notModified: true,
+      }
+    }
+
+    return {
+      slides: normalizeSlides(result.payload),
+      notModified: false,
+      etag: result.etag,
+      lastModified: result.lastModified,
+    }
   }
 
   let lastError = null
+  const preferredApiBases = prioritizeApiBases(runtime.apiBases)
 
-  for (const apiBase of runtime.apiBases) {
+  for (const apiBase of preferredApiBases) {
     const endpoint = buildEndpoint(apiBase, runtime.slug)
+    const useValidators = Boolean(options.background) && apiBase === state.activeApiBase
 
     try {
-      const payload = await fetchSlides(endpoint, 'endpointen')
-      return normalizeSlides(payload)
+      const result = await fetchSlides(
+        endpoint,
+        'endpointen',
+        useValidators
+          ? {
+              etag: state.etag,
+              lastModified: state.lastModified,
+            }
+          : undefined,
+      )
+
+      if (result.notModified) {
+        return {
+          slides: state.slides,
+          notModified: true,
+          apiBase,
+          etag: result.etag,
+          lastModified: result.lastModified,
+        }
+      }
+
+      return {
+        slides: normalizeSlides(result.payload),
+        notModified: false,
+        apiBase,
+        etag: result.etag,
+        lastModified: result.lastModified,
+      }
     } catch (error) {
       lastError = error
     }
@@ -76,12 +129,14 @@ function getRuntimeConfig() {
   )
   const slug = params.get('slug')?.trim() || DEFAULT_SLUG
   const animationsEnabled = params.get('animation')?.trim().toLowerCase() !== 'off'
+  const refreshIntervalMs = getRefreshIntervalMs(params, slug)
 
   if (explicitApiBase) {
     return {
       slug,
       apiBases: [explicitApiBase],
       animationsEnabled,
+      refreshIntervalMs,
     }
   }
 
@@ -89,6 +144,7 @@ function getRuntimeConfig() {
     slug,
     apiBases: isLocalHost() ? [SAME_ORIGIN_API_BASE, REMOTE_API_BASE] : [SAME_ORIGIN_API_BASE],
     animationsEnabled,
+    refreshIntervalMs,
   }
 }
 
@@ -104,22 +160,168 @@ function sanitizeApiBase(value) {
   return value.replace(/\/+$/, '')
 }
 
+function getRefreshIntervalMs(params, slug) {
+  const refreshToggle = params.get('refresh')?.trim().toLowerCase()
+
+  if (refreshToggle === 'off') {
+    return 0
+  }
+
+  const rawMinutes =
+    params.get('refreshMinutes')?.trim() || import.meta.env.VITE_SCREENS_REFRESH_MINUTES?.trim()
+  const fallbackMinutes = slug === DEFAULT_SLUG ? 0 : DEFAULT_REFRESH_MINUTES
+  const refreshMinutes = getNumber(rawMinutes, fallbackMinutes)
+
+  if (refreshMinutes <= 0) {
+    return 0
+  }
+
+  return Math.max(Math.round(refreshMinutes * 60 * 1000), MIN_REFRESH_INTERVAL_MS)
+}
+
+function getNumber(value, fallback) {
+  const parsed = Number(value)
+
+  if (!Number.isFinite(parsed)) {
+    return fallback
+  }
+
+  return parsed
+}
+
+function prioritizeApiBases(apiBases) {
+  if (!state.activeApiBase || !apiBases.includes(state.activeApiBase)) {
+    return apiBases
+  }
+
+  return [state.activeApiBase, ...apiBases.filter((apiBase) => apiBase !== state.activeApiBase)]
+}
+
 function buildEndpoint(apiBase, slug) {
   return `${sanitizeApiBase(apiBase)}/${encodeURIComponent(slug)}/content`
 }
 
-async function fetchSlides(resource, sourceLabel) {
+async function fetchSlides(resource, sourceLabel, validators = {}) {
+  const headers = {
+    accept: 'application/json',
+  }
+
+  if (validators.etag) {
+    headers['if-none-match'] = validators.etag
+  }
+
+  if (validators.lastModified) {
+    headers['if-modified-since'] = validators.lastModified
+  }
+
   const response = await fetch(resource, {
-    headers: {
-      accept: 'application/json',
-    },
+    headers,
+    cache: 'no-cache',
   })
+
+  const etag = response.headers.get('etag') || validators.etag || ''
+  const lastModified = response.headers.get('last-modified') || validators.lastModified || ''
+
+  if (response.status === 304) {
+    return {
+      notModified: true,
+      etag,
+      lastModified,
+    }
+  }
 
   if (!response.ok) {
     throw new Error(`Kunde inte läsa ${sourceLabel} (${response.status} ${response.statusText}).`)
   }
 
-  return response.json()
+  return {
+    notModified: false,
+    payload: await response.json(),
+    etag,
+    lastModified,
+  }
+}
+
+function createSlidesSignature(slides) {
+  return JSON.stringify(slides)
+}
+
+function updateRefreshMetadata(loadResult) {
+  if (!loadResult) {
+    return
+  }
+
+  if (loadResult.apiBase) {
+    state.activeApiBase = loadResult.apiBase
+  }
+
+  state.etag = loadResult.etag || ''
+  state.lastModified = loadResult.lastModified || ''
+}
+
+function startRefreshLoop(runtime) {
+  window.clearTimeout(state.refreshTimer)
+
+  if (runtime.refreshIntervalMs <= 0) {
+    return
+  }
+
+  const runLoop = () => {
+    state.refreshTimer = window.setTimeout(async () => {
+      await refreshSlides(runtime)
+      runLoop()
+    }, runtime.refreshIntervalMs)
+  }
+
+  runLoop()
+}
+
+async function refreshSlides(runtime) {
+  if (state.refreshInFlight) {
+    return
+  }
+
+  state.refreshInFlight = true
+
+  try {
+    const result = await loadSlides(runtime, { background: true })
+
+    updateRefreshMetadata(result)
+
+    if (result.notModified || !result.slides.length) {
+      return
+    }
+
+    const nextSignature = createSlidesSignature(result.slides)
+
+    if (nextSignature === state.slidesSignature) {
+      return
+    }
+
+    const currentSlideId = state.slides[state.slideIndex]?.id
+
+    state.slides = result.slides
+    state.slidesSignature = nextSignature
+
+    if (currentSlideId) {
+      const matchedIndex = state.slides.findIndex((slide) => slide.id === currentSlideId)
+
+      if (matchedIndex >= 0) {
+        state.slideIndex = matchedIndex
+      } else if (state.slideIndex >= state.slides.length) {
+        state.slideIndex = 0
+      }
+    } else {
+      state.slideIndex = 0
+    }
+
+    renderActiveSlide()
+    startRotation()
+  } catch (error) {
+    console.warn('Bakgrundsuppdatering misslyckades.', error)
+  } finally {
+    state.refreshInFlight = false
+  }
 }
 
 function renderShell(runtime) {
