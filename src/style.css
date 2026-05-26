@@ -17,12 +17,21 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --screen-viewport-width: 100vw;
+  --screen-viewport-height: 100vh;
   --screen-surface: var(--color-white);
   --screen-surface-strong: var(--color-white);
   --screen-radius: 2rem;
   --screen-radius-image: var(--spacing-4);
   --screen-caption-radius: var(--spacing-2);
   --screen-gap: var(--spacing-4);
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --screen-viewport-width: 100dvw;
+    --screen-viewport-height: 100dvh;
+  }
 }
 
 * {
@@ -32,15 +41,18 @@
 html,
 body,
 #app {
+  width: 100%;
   min-height: 100%;
 }
 
 body {
+  min-height: var(--screen-viewport-height);
   margin: 0;
   font: var(--type-body-lg);
   font-family: var(--fontfamily-sans);
   color: var(--color-text-base);
   background: var(--color-white);
+  overflow: hidden;
 }
 
 .screen-stage,
@@ -59,14 +71,17 @@ a {
 }
 
 .screen-shell {
-  min-height: 100svh;
+  width: 100%;
+  min-height: var(--screen-viewport-height);
   display: grid;
   place-items: center;
+  overflow: hidden;
 }
 
 .screen-stage {
-  width: min(100svw, calc(100svh * 9 / 16));
-  max-height: 100svh;
+  width: min(var(--screen-viewport-width), calc(var(--screen-viewport-height) * 9 / 16));
+  max-width: 100%;
+  max-height: var(--screen-viewport-height);
   aspect-ratio: 9 / 16;
   position: relative;
   display: grid;
@@ -74,6 +89,20 @@ a {
   min-height: 0;
   overflow: hidden;
   background: var(--color-white);
+}
+
+@media (orientation: portrait) {
+  .screen-shell {
+    place-items: stretch;
+  }
+
+  .screen-stage {
+    width: var(--screen-viewport-width);
+    max-width: none;
+    height: var(--screen-viewport-height);
+    max-height: none;
+    aspect-ratio: auto;
+  }
 }
 
 .screen-stage__content {
