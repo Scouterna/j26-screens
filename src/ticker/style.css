@@ -1,6 +1,6 @@
 :root {
   --screen-ticker-height: 128px;
-  --screen-ticker-duration: 22s;
+  --screen-ticker-duration: 40s;
   --screen-ticker-cycle-width: 0px;
 }
 
@@ -13,6 +13,7 @@
   background-repeat: no-repeat;
   background-position: center top;
   background-size: 100% 100%;
+  contain: layout paint;
 }
 
 .screen-ticker__viewport {
@@ -28,6 +29,8 @@
   display: flex;
   align-items: center;
   width: max-content;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
   animation: ticker-scroll var(--screen-ticker-duration) linear infinite;
   will-change: transform;
 }
@@ -60,10 +63,10 @@
 
 @keyframes ticker-scroll {
   from {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
 
   to {
-    transform: translateX(calc(-1 * var(--screen-ticker-cycle-width)));
+    transform: translate3d(calc(-1 * var(--screen-ticker-cycle-width)), 0, 0);
   }
 }

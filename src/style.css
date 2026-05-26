@@ -19,8 +19,6 @@
   -moz-osx-font-smoothing: grayscale;
   --screen-viewport-width: 100vw;
   --screen-viewport-height: 100vh;
-  --screen-stage-aspect-width: 9;
-  --screen-stage-aspect-height: 16;
   --screen-surface: var(--color-white);
   --screen-surface-strong: var(--color-white);
   --screen-radius: 2rem;
@@ -76,16 +74,15 @@ a {
   width: 100%;
   min-height: var(--screen-viewport-height);
   display: grid;
-  place-items: stretch;
+  place-items: center;
   overflow: hidden;
 }
 
 .screen-stage {
-  width: var(--screen-viewport-width);
-  height: var(--screen-viewport-height);
-  max-width: none;
-  max-height: none;
-  aspect-ratio: auto;
+  width: min(var(--screen-viewport-width), calc(var(--screen-viewport-height) * 9 / 16));
+  max-width: 100%;
+  max-height: var(--screen-viewport-height);
+  aspect-ratio: 9 / 16;
   position: relative;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
@@ -94,25 +91,11 @@ a {
   background: var(--color-white);
 }
 
-.screen-shell[data-stage-fit='contain'] {
-  place-items: center;
-}
-
-.screen-shell[data-stage-fit='contain'] .screen-stage {
-  width: min(
-    var(--screen-viewport-width),
-    calc(
-      var(--screen-viewport-height) * var(--screen-stage-aspect-width) /
-        var(--screen-stage-aspect-height)
-    )
-  );
-  height: auto;
-  max-width: 100%;
-  max-height: var(--screen-viewport-height);
-  aspect-ratio: var(--screen-stage-aspect-width) / var(--screen-stage-aspect-height);
-}
-
 @media (orientation: portrait) {
+  .screen-shell {
+    place-items: stretch;
+  }
+
   .screen-stage {
     width: var(--screen-viewport-width);
     max-width: none;
@@ -140,9 +123,7 @@ a {
   gap: var(--spacing-2);
   padding: 0.7rem 0.9rem;
   border-radius: 999px;
-  background: rgb(255 255 255 / 92%);
-  box-shadow: 0 0.35rem 0.9rem rgb(0 0 0 / 12%);
-  backdrop-filter: blur(10px);
+  background: var(--color-white);
   pointer-events: none;
   z-index: 2;
 }
@@ -175,7 +156,7 @@ a {
   padding: var(--spacing-3);
   overflow: hidden;
   background-color: var(--screen-layout-background-color, var(--color-white));
-  animation: layout-enter 360ms ease;
+  animation: layout-enter 320ms linear both;
 }
 
 .screen-shell[data-animations='off'] .screen-layout,
@@ -203,8 +184,7 @@ a {
   overflow: hidden;
   border-radius: var(--screen-radius);
   background: var(--screen-surface);
-  animation: block-enter 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  animation-delay: calc(var(--block-index, 0) * 70ms);
+  animation: block-enter 360ms linear both;
 }
 
 .screen-block--rich-text,
@@ -311,7 +291,6 @@ a {
   background: var(--color-neutral-900);
   color: var(--color-text-brand-inverse);
   font: var(--type-label-base);
-  backdrop-filter: blur(10px);
 }
 
 .iframe-card {
@@ -387,23 +366,29 @@ a {
 @keyframes layout-enter {
   from {
     opacity: 0;
-    transform: translateY(16px) scale(0.99);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
 
 @keyframes block-enter {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translate3d(0, 6px, 0);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-layout,
+  .screen-block,
+  .screen-ticker__track {
+    animation: none !important;
   }
 }
