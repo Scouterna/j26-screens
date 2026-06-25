@@ -11,6 +11,7 @@
   "devDependencies": {
     "vite": "^8.0.12"
   },
+  "packageManager": "pnpm@10.25.0",
   "dependencies": {
     "@fontsource-variable/source-sans-3": "^5.2.9",
     "@payloadcms/richtext-lexical": "^3.84.1",
