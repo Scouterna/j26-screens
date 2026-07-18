@@ -58,14 +58,22 @@ function renderEmergencyLayout(slide) {
 }
 
 function renderInfoScreenLayout(slide) {
+  if (slide.blocks.length < 2) {
+    return renderConfiguredLayout(
+      slide,
+      { renderBlock, createEmptyBlock },
+      { axis: 'rows', tracks: [1] },
+    )
+  }
+
   const layout = document.createElement('section')
   const wave = document.createElement('div')
 
   layout.className = 'screen-layout screen-layout--info'
   wave.className = 'screen-info-wave'
 
-  const block1 = renderBlock(slide.blocks[0] ?? createEmptyBlock('info-block-1'), 0)
-  const block2 = renderBlock(slide.blocks[1] ?? createEmptyBlock('info-block-2'), 1)
+  const block1 = renderBlock(slide.blocks[0], 0)
+  const block2 = renderBlock(slide.blocks[1], 1)
 
   layout.append(block1, wave, block2)
   return layout
