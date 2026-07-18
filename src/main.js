@@ -570,22 +570,53 @@ async function refreshImportantInfo() {
 
 function createImportantInfoBanner(info) {
   const banner = document.createElement('div')
-  const bar = document.createElement('div')
-  const stripe = document.createElement('div')
   const inner = document.createElement('div')
+  const header = document.createElement('div')
+  const title = document.createElement('span')
+  const body = document.createElement('div')
   const content = document.createElement('div')
 
   banner.className = 'important-info-banner'
-  bar.className = 'important-info-banner__bar'
-  stripe.className = 'important-info-banner__stripe'
   inner.className = 'important-info-banner__inner'
+  header.className = 'important-info-banner__header'
+  title.className = 'important-info-banner__title'
+  title.textContent = 'Gul varning'
+  body.className = 'important-info-banner__body'
   content.className = 'rich-text'
   content.innerHTML = info.html
 
-  inner.append(content)
-  stripe.append(inner)
-  banner.append(bar, stripe)
+  header.append(createWarningTriangleSVG(), title)
+  body.append(content)
+  inner.append(header, body)
+  banner.append(inner)
   return banner
+}
+
+function createWarningTriangleSVG() {
+  const ns = 'http://www.w3.org/2000/svg'
+  const svg = document.createElementNS(ns, 'svg')
+  svg.setAttribute('viewBox', '0 0 24 24')
+  svg.setAttribute('aria-hidden', 'true')
+  svg.setAttribute('class', 'important-info-banner__icon')
+
+  const path = document.createElementNS(ns, 'path')
+  path.setAttribute('d', 'M1 21h22L12 2 1 21z')
+  path.setAttribute('fill', '#f5d000')
+  path.setAttribute('stroke', '#cc2200')
+  path.setAttribute('stroke-width', '1.5')
+  path.setAttribute('stroke-linejoin', 'round')
+
+  const exclamation = document.createElementNS(ns, 'text')
+  exclamation.setAttribute('x', '12')
+  exclamation.setAttribute('y', '18.5')
+  exclamation.setAttribute('text-anchor', 'middle')
+  exclamation.setAttribute('font-size', '10')
+  exclamation.setAttribute('font-weight', '900')
+  exclamation.setAttribute('fill', '#1a1a1a')
+  exclamation.textContent = '!'
+
+  svg.append(path, exclamation)
+  return svg
 }
 
 function renderError(error, slug) {
