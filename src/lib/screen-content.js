@@ -3,6 +3,22 @@ import { isEmergencyLayoutName, normalizeSlideBackground } from './slide-backgro
 
 const DEFAULT_DURATION_SECONDS = 10
 
+export function normalizeScreenPayload(payload) {
+  if (Array.isArray(payload)) {
+    return {
+      slides: normalizeSlides(payload),
+      rollingText: '',
+      bottomIframeURL: '',
+    }
+  }
+
+  return {
+    slides: normalizeSlides(Array.isArray(payload?.slides) ? payload.slides : []),
+    rollingText: typeof payload?.rollingText === 'string' ? payload.rollingText.trim() : '',
+    bottomIframeURL: sanitizeExternalUrl(payload?.bottomIframeURL),
+  }
+}
+
 export function normalizeSlides(payload) {
   if (!Array.isArray(payload)) {
     return []
@@ -18,7 +34,7 @@ export function createEmptyBlock(id) {
   }
 }
 
-function sanitizeExternalUrl(value) {
+export function sanitizeExternalUrl(value) {
   if (typeof value !== 'string' || !value.trim()) {
     return ''
   }
@@ -145,7 +161,7 @@ function pickImageUrl(image) {
   )
 }
 
-function richTextToHtml(richText) {
+export function richTextToHtml(richText) {
   if (!richText?.root) {
     return ''
   }

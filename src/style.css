@@ -85,7 +85,7 @@ a {
   aspect-ratio: 9 / 16;
   position: relative;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: 1fr;
   min-height: 0;
   overflow: hidden;
   background: var(--color-white);
@@ -108,7 +108,8 @@ a {
 .screen-stage__content {
   width: 100%;
   min-height: 0;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
@@ -144,16 +145,61 @@ a {
   background: var(--color-text-base);
 }
 
+.screen-voting-overlay {
+  flex-shrink: 0;
+}
+
+.screen-voting-overlay[hidden] {
+  display: none;
+}
+
+.screen-voting-overlay iframe {
+  display: block;
+  width: 100%;
+  height: 25dvh;
+  border: 0;
+}
+
+.important-info-banner {
+  flex-shrink: 0;
+}
+
+.important-info-banner__bar {
+  height: 6px;
+  background: #1c2b4a;
+}
+
+.important-info-banner__stripe {
+  padding: 10px;
+  background: repeating-linear-gradient(
+    -45deg,
+    #f5d000 0,
+    #f5d000 14px,
+    #1a1a1a 14px,
+    #1a1a1a 28px
+  );
+}
+
+.important-info-banner__inner {
+  background: var(--color-white);
+  padding: var(--spacing-5) var(--spacing-6);
+}
+
+.important-info-banner .rich-text {
+  overflow: hidden;
+}
+
 .screen-layout,
 .state-card {
   width: 100%;
   min-height: 0;
+  flex: 1;
 }
 
 .screen-layout {
   display: grid;
   gap: var(--screen-gap);
-  padding: var(--spacing-3);
+  padding: 0;
   overflow: hidden;
   background-color: var(--screen-layout-background-color, var(--color-white));
   animation: layout-enter 320ms linear both;
@@ -172,6 +218,30 @@ a {
   grid-template-columns: repeat(var(--track-count), minmax(0, 1fr));
 }
 
+.screen-layout--info {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  gap: 0;
+  background: var(--color-white);
+}
+
+.screen-layout--info > .screen-block {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  min-height: unset;
+  flex: 0 0 auto;
+}
+
+.screen-info-wave {
+  flex: 1;
+  min-height: 0;
+  background-image: url('./assets/bg_w_slide_middle.svg');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-color: var(--color-white);
+}
+
 .screen-track {
   display: grid;
   gap: var(--screen-gap);
@@ -182,7 +252,6 @@ a {
   position: relative;
   min-height: 0;
   overflow: hidden;
-  border-radius: var(--screen-radius);
   background: var(--screen-surface);
   animation: block-enter 360ms linear both;
 }
@@ -198,7 +267,7 @@ a {
 }
 
 .screen-block--image {
-  border-radius: var(--screen-radius-image);
+  border-radius: 0;
 }
 
 .rich-text {
@@ -310,7 +379,6 @@ a {
   display: grid;
   place-items: center;
   padding: var(--spacing-6);
-  border-radius: calc(var(--screen-radius) - 0.5rem);
   text-align: center;
 }
 

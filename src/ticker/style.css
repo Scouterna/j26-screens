@@ -5,6 +5,10 @@
 }
 
 .screen-ticker {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   height: var(--screen-ticker-height);
   display: block;
   overflow: hidden;
@@ -14,6 +18,11 @@
   background-position: center top;
   background-size: 100% 100%;
   contain: layout paint;
+  z-index: 2;
+}
+
+.screen-ticker[hidden] {
+  display: none;
 }
 
 .screen-ticker__viewport {

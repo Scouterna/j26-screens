@@ -1,14 +1,16 @@
 import defaultSlidesUrl from './assets/j26_default.json?url'
 import './style.css'
-import { normalizeSlides } from './lib/screen-content.js'
+import { normalizeScreenPayload, richTextToHtml } from './lib/screen-content.js'
 import { renderSlideLayout } from './layouts/index.js'
 import { createTicker } from './ticker/index.js'
 
 const DEFAULT_SLUG = 'j26_default'
 const SAME_ORIGIN_API_BASE = '/_services/cms/api/screens'
 const REMOTE_API_BASE = 'https://app.dev.j26.se/_services/cms/api/screens'
+const GLOBAL_INFO_URL = '/_services/cms/api/globals/important-info'
 const DEFAULT_REFRESH_MINUTES = 2
 const MIN_REFRESH_INTERVAL_MS = 15000
+const IMPORTANT_INFO_POLL_INTERVAL_MS = 30_000
 
 const app = document.querySelector('#app')
 
@@ -17,20 +19,30 @@ const state = {
   slideIndex: 0,
   rotationTimer: 0,
   refreshTimer: 0,
+  importantInfoTimer: 0,
   refreshInFlight: false,
   slidesSignature: '',
   activeApiBase: '',
   etag: '',
   lastModified: '',
+  rollingText: '',
+  importantInfo: null,
+  bottomIframeURL: '',
+  isServiceScreen: false,
 }
 
+let stageContainerElement
 let stageElement
 let slideIndicatorElement
+let tickerElement
+let votingOverlayElement
 
 boot()
 
 async function boot() {
   const runtime = getRuntimeConfig()
+
+  state.isServiceScreen = runtime.slug.endsWith('_ser')
 
   renderShell(runtime)
   renderStageState({
@@ -39,7 +51,11 @@ async function boot() {
   })
 
   try {
-    const initialLoad = await loadSlides(runtime)
+    const [initialLoad, initialInfo] = await Promise.all([
+      loadSlides(runtime),
+      fetchImportantInfo(),
+    ])
+
     const slides = initialLoad.slides
 
     if (!slides.length) {
@@ -49,11 +65,14 @@ async function boot() {
     state.slides = slides
     state.slidesSignature = createSlidesSignature(slides)
     state.slideIndex = 0
+    state.importantInfo = initialInfo
     updateRefreshMetadata(initialLoad)
+    applyScreenData(initialLoad)
 
     renderActiveSlide()
     startRotation()
     startRefreshLoop(runtime)
+    startImportantInfoPolling()
   } catch (error) {
     renderError(error, runtime.slug)
   }
@@ -66,12 +85,16 @@ async function loadSlides(runtime, options = {}) {
     if (result.notModified) {
       return {
         slides: state.slides,
+        rollingText: state.rollingText,
+        bottomIframeURL: state.bottomIframeURL,
         notModified: true,
       }
     }
 
+    const normalized = normalizeScreenPayload(result.payload)
+
     return {
-      slides: normalizeSlides(result.payload),
+      ...normalized,
       notModified: false,
       etag: result.etag,
       lastModified: result.lastModified,
@@ -100,6 +123,8 @@ async function loadSlides(runtime, options = {}) {
       if (result.notModified) {
         return {
           slides: state.slides,
+          rollingText: state.rollingText,
+          bottomIframeURL: state.bottomIframeURL,
           notModified: true,
           apiBase,
           etag: result.etag,
@@ -107,8 +132,10 @@ async function loadSlides(runtime, options = {}) {
         }
       }
 
+      const normalized = normalizeScreenPayload(result.payload)
+
       return {
-        slides: normalizeSlides(result.payload),
+        ...normalized,
         notModified: false,
         apiBase,
         etag: result.etag,
@@ -293,10 +320,15 @@ async function refreshSlides(runtime) {
     }
 
     const nextSignature = createSlidesSignature(result.slides)
+    const screenDataChanged =
+      result.rollingText !== state.rollingText ||
+      result.bottomIframeURL !== state.bottomIframeURL
 
-    if (nextSignature === state.slidesSignature) {
+    if (nextSignature === state.slidesSignature && !screenDataChanged) {
       return
     }
+
+    applyScreenData(result)
 
     const currentSlideId = state.slides[state.slideIndex]?.id
 
@@ -329,6 +361,8 @@ function renderShell(runtime) {
   const stage = document.createElement('div')
   const main = document.createElement('main')
   const slideIndicator = document.createElement('div')
+  const votingOverlay = document.createElement('div')
+  const ticker = createTicker()
 
   shell.className = 'screen-shell'
   shell.dataset.animations = runtime.animationsEnabled ? 'on' : 'off'
@@ -338,13 +372,19 @@ function renderShell(runtime) {
   slideIndicator.className = 'screen-stage__indicator'
   slideIndicator.hidden = true
   slideIndicator.setAttribute('aria-live', 'polite')
+  votingOverlay.className = 'screen-voting-overlay'
+  votingOverlay.hidden = true
+  ticker.hidden = true
 
-  stage.append(main, slideIndicator, createTicker())
+  stage.append(main, slideIndicator, ticker)
   shell.append(stage)
   app.replaceChildren(shell)
 
+  stageContainerElement = stage
   stageElement = main
   slideIndicatorElement = slideIndicator
+  tickerElement = ticker
+  votingOverlayElement = votingOverlay
 }
 
 function renderActiveSlide() {
@@ -354,12 +394,24 @@ function renderActiveSlide() {
     return
   }
 
-  stageElement.replaceChildren(renderSlideLayout(slide))
+  const children = [renderSlideLayout(slide)]
+
+  if (state.isServiceScreen && state.importantInfo) {
+    children.push(createImportantInfoBanner(state.importantInfo))
+  }
+
+  children.push(votingOverlayElement)
+
+  stageElement.replaceChildren(...children)
   renderSlideIndicator()
 }
 
 function startRotation() {
   window.clearTimeout(state.rotationTimer)
+
+  if (state.bottomIframeURL) {
+    return
+  }
 
   const slide = state.slides[state.slideIndex]
 
@@ -431,6 +483,109 @@ function renderSlideIndicator() {
   }
 
   slideIndicatorElement.replaceChildren(fragment)
+}
+
+function applyScreenData(loadResult) {
+  const rollingText = loadResult.rollingText || ''
+  const bottomIframeURL = loadResult.bottomIframeURL || ''
+
+  if (rollingText !== state.rollingText) {
+    state.rollingText = rollingText
+    const newTicker = createTicker(rollingText)
+    stageContainerElement.replaceChild(newTicker, tickerElement)
+    tickerElement = newTicker
+  }
+
+  tickerElement.hidden = !rollingText || !!bottomIframeURL
+
+  state.bottomIframeURL = bottomIframeURL
+
+  if (votingOverlayElement) {
+    if (bottomIframeURL) {
+      const iframe = document.createElement('iframe')
+      iframe.src = bottomIframeURL
+      iframe.title = 'Omröstning'
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin'
+      iframe.loading = 'eager'
+      votingOverlayElement.replaceChildren(iframe)
+      votingOverlayElement.hidden = false
+    } else {
+      votingOverlayElement.hidden = true
+      votingOverlayElement.replaceChildren()
+    }
+  }
+}
+
+async function fetchImportantInfo() {
+  try {
+    const response = await fetch(GLOBAL_INFO_URL, {
+      headers: { accept: 'application/json' },
+      cache: 'no-cache',
+    })
+
+    if (!response.ok) {
+      return null
+    }
+
+    const data = await response.json()
+
+    if (!data?.active || !data.content?.root) {
+      return null
+    }
+
+    const html = richTextToHtml(data.content)
+    return html ? { html } : null
+  } catch {
+    return null
+  }
+}
+
+function startImportantInfoPolling() {
+  window.clearTimeout(state.importantInfoTimer)
+
+  const runLoop = () => {
+    state.importantInfoTimer = window.setTimeout(async () => {
+      await refreshImportantInfo()
+      runLoop()
+    }, IMPORTANT_INFO_POLL_INTERVAL_MS)
+  }
+
+  runLoop()
+}
+
+async function refreshImportantInfo() {
+  const nextInfo = await fetchImportantInfo()
+  const changed = JSON.stringify(nextInfo) !== JSON.stringify(state.importantInfo)
+
+  if (!changed) {
+    return
+  }
+
+  state.importantInfo = nextInfo
+
+  if (state.slides.length > 0) {
+    renderActiveSlide()
+  }
+}
+
+function createImportantInfoBanner(info) {
+  const banner = document.createElement('div')
+  const bar = document.createElement('div')
+  const stripe = document.createElement('div')
+  const inner = document.createElement('div')
+  const content = document.createElement('div')
+
+  banner.className = 'important-info-banner'
+  bar.className = 'important-info-banner__bar'
+  stripe.className = 'important-info-banner__stripe'
+  inner.className = 'important-info-banner__inner'
+  content.className = 'rich-text'
+  content.innerHTML = info.html
+
+  inner.append(content)
+  stripe.append(inner)
+  banner.append(bar, stripe)
+  return banner
 }
 
 function renderError(error, slug) {
