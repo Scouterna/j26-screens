@@ -3,6 +3,7 @@ import { createEmptyBlock } from '../lib/screen-content.js'
 import { isEmergencyLayoutName } from '../lib/slide-background.js'
 import { renderConfiguredLayout } from './configured-layout.js'
 
+
 const INFO_SCREEN_LAYOUT_NAME = 'ser_info'
 
 const LAYOUT_CONFIGS = {
