@@ -3,7 +3,6 @@ import { createEmptyBlock } from '../lib/screen-content.js'
 import { isEmergencyLayoutName } from '../lib/slide-background.js'
 import { renderConfiguredLayout } from './configured-layout.js'
 
-
 const INFO_SCREEN_LAYOUT_NAME = 'ser_info'
 
 const LAYOUT_CONFIGS = {
@@ -22,6 +21,14 @@ const LAYOUT_CONFIGS = {
   'kom_vote_gallery': {
     axis: 'rows',
     tracks: [2, 2],
+  },
+  'kom_single': {
+    axis: 'rows',
+    tracks: [1],
+  },
+  'kom_two_rows': {
+    axis: 'rows',
+    tracks: [1, 1],
   },
 }
 
