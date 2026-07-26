@@ -12,7 +12,7 @@
   height: var(--screen-ticker-height);
   display: block;
   overflow: hidden;
-  background-color: var(--color-white);
+  background-color: transparent;
   background-image: url('../assets/bg_w_slide_single.svg');
   background-repeat: no-repeat;
   background-position: center top;
