@@ -14,9 +14,21 @@ export function normalizeScreenPayload(payload) {
 
   return {
     slides: normalizeSlides(Array.isArray(payload?.slides) ? payload.slides : []),
-    rollingText: typeof payload?.rollingText === 'string' ? payload.rollingText.trim() : '',
+    rollingText: normalizeRollingText(payload?.rollingText),
     bottomIframeURL: sanitizeExternalUrl(payload?.bottomIframeURL),
   }
+}
+
+function normalizeRollingText(value) {
+  if (typeof value === 'string') {
+    return value.trim()
+  }
+
+  if (typeof value?.content === 'string') {
+    return value.content.trim()
+  }
+
+  return ''
 }
 
 export function normalizeSlides(payload) {
