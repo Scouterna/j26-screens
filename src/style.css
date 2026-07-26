@@ -267,7 +267,7 @@ a {
 .screen-info-wave {
   flex: 0 1 18dvh;
   min-height: 0;
-  margin-top: calc(-1 * var(--screen-wave-overlap-top, 6.5dvh));
+  margin-top: calc(-1 * var(--screen-wave-overlap-top, 7dvh));
   margin-bottom: calc(-1 * var(--screen-wave-overlap-bottom, 3dvh));
   position: relative;
   z-index: 1;
