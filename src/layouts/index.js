@@ -4,6 +4,11 @@ import { isEmergencyLayoutName } from '../lib/slide-background.js'
 import { renderConfiguredLayout } from './configured-layout.js'
 
 const INFO_SCREEN_LAYOUT_NAME = 'ser_info'
+const GALLERY_LAYOUTS = {
+  kom_gallery: [2, 1, 3],
+  kom_vote_gallery: [1, 3],
+  kom_two_rows: [1, 1],
+}
 
 const LAYOUT_CONFIGS = {
   'one-row-1': {
@@ -18,17 +23,13 @@ const LAYOUT_CONFIGS = {
     axis: 'rows',
     tracks: [2, 1, 3],
   },
-  'kom_vote_gallery': {
-    axis: 'rows',
-    tracks: [2, 2],
-  },
   'kom_single': {
     axis: 'rows',
     tracks: [1],
   },
-  'kom_two_rows': {
+  'kom_vote_single': {
     axis: 'rows',
-    tracks: [1, 1],
+    tracks: [1],
   },
 }
 
@@ -39,6 +40,10 @@ export function renderSlideLayout(slide) {
 
   if (slide.layoutName === INFO_SCREEN_LAYOUT_NAME) {
     return renderInfoScreenLayout(slide)
+  }
+
+  if (slide.layoutName in GALLERY_LAYOUTS) {
+    return renderGalleryLayout(slide, GALLERY_LAYOUTS[slide.layoutName])
   }
 
   const layoutConfig = LAYOUT_CONFIGS[slide.layoutName] ?? slide.structure
@@ -84,5 +89,37 @@ function renderInfoScreenLayout(slide) {
   const block2 = renderBlock(slide.blocks[1], 1)
 
   layout.append(block1, wave, block2)
+  return layout
+}
+
+function renderGalleryLayout(slide, tracks) {
+  const layout = document.createElement('section')
+
+  layout.className = 'screen-layout screen-layout--gallery'
+
+  let blockIndex = 0
+
+  tracks.forEach((slotCount, trackIndex) => {
+    if (trackIndex > 0) {
+      const wave = document.createElement('div')
+      wave.className = 'screen-info-wave'
+      layout.append(wave)
+    }
+
+    const row = document.createElement('div')
+
+    row.className = 'screen-gallery-row'
+    row.dataset.aspect = slotCount >= 3 ? 'tall' : 'wide'
+    row.style.gridTemplateColumns = `repeat(${slotCount}, minmax(0, 1fr))`
+
+    for (let slotIndex = 0; slotIndex < slotCount; slotIndex += 1) {
+      const block = slide.blocks[blockIndex] ?? createEmptyBlock(`gallery-${blockIndex + 1}`)
+      row.append(renderBlock(block, blockIndex))
+      blockIndex += 1
+    }
+
+    layout.append(row)
+  })
+
   return layout
 }

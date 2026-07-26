@@ -273,6 +273,28 @@ a {
   background-color: var(--color-white);
 }
 
+.screen-layout--gallery {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  gap: 0;
+  background: var(--color-white);
+}
+
+.screen-gallery-row {
+  display: grid;
+  gap: var(--screen-gap);
+  flex: 0 0 auto;
+}
+
+.screen-gallery-row[data-aspect='wide'] > .screen-block {
+  aspect-ratio: 4 / 3;
+}
+
+.screen-gallery-row[data-aspect='tall'] > .screen-block {
+  aspect-ratio: 3 / 4;
+}
+
 .screen-track {
   display: grid;
   gap: var(--screen-gap);
