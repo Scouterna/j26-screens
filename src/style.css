@@ -267,10 +267,16 @@ a {
 .screen-info-wave {
   flex: 1;
   min-height: 0;
-  background-image: url('./assets/bg_w_slide_middle.svg');
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  background-color: var(--color-white);
+  margin-block: calc(-1 * var(--screen-wave-overlap, 3dvh));
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+  background-image:
+    url('./assets/bg_w_slide_middle.svg'),
+    radial-gradient(ellipse 11% 24% at 91% 16%, var(--color-white) 60%, transparent 100%);
+  background-size: 100% 100%, 100% 100%;
+  background-repeat: no-repeat, no-repeat;
+  background-color: transparent;
 }
 
 .screen-layout--gallery {

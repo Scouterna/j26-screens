@@ -362,7 +362,7 @@ function renderShell(runtime) {
   const main = document.createElement('main')
   const slideIndicator = document.createElement('div')
   const votingOverlay = document.createElement('div')
-  const ticker = createTicker()
+  const ticker = createTicker('')
 
   shell.className = 'screen-shell'
   shell.dataset.animations = runtime.animationsEnabled ? 'on' : 'off'
@@ -496,7 +496,7 @@ function applyScreenData(loadResult) {
     tickerElement = newTicker
   }
 
-  tickerElement.hidden = !rollingText || !!bottomIframeURL
+  tickerElement.hidden = !!bottomIframeURL
 
   state.bottomIframeURL = bottomIframeURL
 

@@ -92,10 +92,8 @@ function renderTickerSequence(sequence, items, repeatCount) {
 }
 
 function normalizeTickerItems(text) {
-  const items = String(text)
+  return String(text)
     .split(DEFAULT_TICKER_SEPARATOR_PATTERN)
     .map((item) => item.trim())
     .filter(Boolean)
-
-  return items.length > 0 ? items : [DEFAULT_TICKER_TEXT]
 }
