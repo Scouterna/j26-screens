@@ -515,8 +515,7 @@ a {
 
 @media (prefers-reduced-motion: reduce) {
   .screen-layout,
-  .screen-block,
-  .screen-ticker__track {
+  .screen-block {
     animation: none !important;
   }
 }
