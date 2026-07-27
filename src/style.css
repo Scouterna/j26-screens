@@ -272,11 +272,9 @@ a {
   position: relative;
   z-index: 1;
   pointer-events: none;
-  background-image:
-    url('./assets/bg_w_slide_middle.svg'),
-    radial-gradient(ellipse 11% 24% at 91% 16%, var(--color-white) 60%, transparent 100%);
-  background-size: 100% 100%, 100% 100%;
-  background-repeat: no-repeat, no-repeat;
+  background-image: url('./assets/bg_w_slide_middle.svg');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   background-color: transparent;
 }
 
