@@ -409,10 +409,6 @@ function renderActiveSlide() {
 function startRotation() {
   window.clearTimeout(state.rotationTimer)
 
-  if (state.bottomIframeURL) {
-    return
-  }
-
   const slide = state.slides[state.slideIndex]
 
   if (!slide) {
@@ -513,6 +509,10 @@ function applyScreenData(loadResult) {
       votingOverlayElement.hidden = true
       votingOverlayElement.replaceChildren()
     }
+  }
+
+  if (stageContainerElement) {
+    stageContainerElement.dataset.voting = bottomIframeURL ? 'true' : 'false'
   }
 }
 

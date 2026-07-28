@@ -134,6 +134,7 @@ function normalizeBlock(block, index) {
 
   if (blockType === 'screen-image-content') {
     const image = block?.image ?? {}
+    const mimeType = typeof image.mimeType === 'string' ? image.mimeType : ''
 
     return {
       id: block?.id ?? `image-${index + 1}`,
@@ -141,6 +142,8 @@ function normalizeBlock(block, index) {
       src: pickImageUrl(image),
       alt: image.alt || image.caption || 'Slide image',
       caption: image.caption || '',
+      isVideo: mimeType.startsWith('video/'),
+      mimeType,
     }
   }
 

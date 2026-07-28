@@ -25,6 +25,7 @@
   --screen-radius-image: var(--spacing-4);
   --screen-caption-radius: var(--spacing-2);
   --screen-gap: var(--spacing-4);
+  --screen-voting-overlay-height: 25dvh;
 }
 
 @supports (height: 100dvh) {
@@ -36,6 +37,14 @@
 
 * {
   box-sizing: border-box;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 html,
@@ -61,6 +70,7 @@ body {
 }
 
 img,
+video,
 iframe {
   display: block;
   max-width: 100%;
@@ -128,7 +138,11 @@ a {
   border-radius: 999px;
   background: var(--color-white);
   pointer-events: none;
-  z-index: 2;
+  z-index: 3;
+}
+
+.screen-stage[data-voting='true'] .screen-stage__indicator {
+  bottom: calc(var(--screen-voting-overlay-height) + var(--spacing-3));
 }
 
 .screen-stage__indicator[hidden] {
@@ -158,7 +172,7 @@ a {
 .screen-voting-overlay iframe {
   display: block;
   width: 100%;
-  height: 25dvh;
+  height: var(--screen-voting-overlay-height);
   border: 0;
 }
 
@@ -404,7 +418,8 @@ a {
   position: relative;
 }
 
-.media-card img {
+.media-card img,
+.media-card video {
   width: 100%;
   height: 100%;
   object-fit: cover;
