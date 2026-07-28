@@ -125,6 +125,14 @@ a {
   overflow: hidden;
 }
 
+.screen-stage__slide {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .screen-stage__indicator {
   position: absolute;
   left: 50%;

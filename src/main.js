@@ -360,6 +360,7 @@ function renderShell(runtime) {
   const shell = document.createElement('div')
   const stage = document.createElement('div')
   const main = document.createElement('main')
+  const slideContent = document.createElement('div')
   const slideIndicator = document.createElement('div')
   const votingOverlay = document.createElement('div')
   const ticker = createTicker('')
@@ -369,6 +370,7 @@ function renderShell(runtime) {
   stage.className = 'screen-stage'
   main.className = 'screen-stage__content'
   main.dataset.role = 'stage'
+  slideContent.className = 'screen-stage__slide'
   slideIndicator.className = 'screen-stage__indicator'
   slideIndicator.hidden = true
   slideIndicator.setAttribute('aria-live', 'polite')
@@ -376,12 +378,13 @@ function renderShell(runtime) {
   votingOverlay.hidden = true
   ticker.hidden = true
 
+  main.append(slideContent, votingOverlay)
   stage.append(main, slideIndicator, ticker)
   shell.append(stage)
   app.replaceChildren(shell)
 
   stageContainerElement = stage
-  stageElement = main
+  stageElement = slideContent
   slideIndicatorElement = slideIndicator
   tickerElement = ticker
   votingOverlayElement = votingOverlay
@@ -399,8 +402,6 @@ function renderActiveSlide() {
   if (state.isServiceScreen && state.importantInfo) {
     children.push(createImportantInfoBanner(state.importantInfo))
   }
-
-  children.push(votingOverlayElement)
 
   stageElement.replaceChildren(...children)
   renderSlideIndicator()
