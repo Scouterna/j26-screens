@@ -133,6 +133,41 @@ a {
   overflow: hidden;
 }
 
+.screen-comparison {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4rem;
+  width: 100%;
+  min-height: var(--screen-viewport-height);
+  padding: 3rem;
+  background: var(--color-white);
+}
+
+.screen-comparison__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.screen-comparison__label {
+  margin: 0;
+  font: 600 1rem/1.2 var(--fontfamily-sans);
+  color: var(--color-text-base);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.screen-comparison__stage {
+  --screen-viewport-width: 42vw;
+  --screen-viewport-height: 80vh;
+  width: var(--screen-viewport-width);
+  display: flex;
+  justify-content: center;
+}
+
 .screen-stage__indicator {
   position: absolute;
   left: 50%;
