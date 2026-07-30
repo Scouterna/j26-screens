@@ -1,5 +1,5 @@
-const SAME_ORIGIN_API_BASE = '/_services/interactive-screens/api/heartbeat'
-const REMOTE_API_BASE = 'https://app.dev.j26.se/_services/interactive-screens/api/heartbeat'
+const SAME_ORIGIN_API_BASE = '/_services/screens/api/heartbeat'
+const REMOTE_API_BASE = 'https://app.dev.j26.se/_services/screens/api/heartbeat'
 const POLL_INTERVAL_MS = 5000
 const STALE_AFTER_S = 45
 const OFFLINE_AFTER_S = 90

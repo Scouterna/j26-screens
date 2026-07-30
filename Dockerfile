@@ -12,6 +12,9 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build -- --base=/_services/screens/
 
-FROM nginx:alpine AS runner
-COPY --from=builder /app/dist /usr/share/nginx/html
+FROM base AS runner
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+COPY server.js ./server.js
 EXPOSE 80
+CMD ["node", "server.js"]

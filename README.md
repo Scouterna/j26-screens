@@ -59,33 +59,52 @@ http://localhost:5173/?slug=my-screen&refreshMinutes=1
 
 Tangentbordsinput hanteras utanför webappen, till exempel via en lokal brygga på Raspberry Pi.
 
-## Heartbeat-vy
+## Heartbeat-vy och API
 
 `?slug=heartbeat` renderar en driftöversikt istället för en skärm (samma
 mönster som jämförelsevyn, se `isComparisonSlug` i `src/main.js`).
 Implementationen ligger i `src/heartbeat-view.js` och pollar
-`/_services/interactive-screens/api/heartbeat` var 5:e sekund via GET.
+`/_services/screens/api/heartbeat` var 5:e sekund via GET.
 
 ```text
 http://localhost:5173/?slug=heartbeat
 ```
 
 Sidan visar per skärm: online, HDMI-status, antal RFID-läsare, senaste
-heartbeat och dess ålder. Den förväntar sig ett JSON-svar som antingen är
-en array eller ett objekt keyat på `screenId`:
+heartbeat och dess ålder.
 
-```json
-[
-  { "screenId": "info_1_ser", "online": true, "hdmiActive": true, "readerCount": 1, "lastSeenAt": "2026-07-30T08:06:04Z" }
-]
-```
+### Backend: `server.js`
 
-**Viktigt för den som bygger den riktiga endpointen på app.jamboree.se:**
-den måste svara på både `.../api/heartbeat` och `.../api/heartbeat/`
-utan att 301/302/303-omdirigera POST mellan varianterna. `urllib` (Python,
-används av kbd-bridge på Pi:n) och de flesta HTTP-klienter konverterar
-tyst en POST till en GET vid den typen av redirect och tappar hela
-payloaden.
+`/_services/screens/` serverades tidigare av rå nginx (bara statiska
+filer) — det räcker inte för att ta emot en POST. `server.js` är en liten
+beroendefri Node-server som ersätter nginx som runner-steg i `Dockerfile`:
+den serverar `dist/` precis som nginx gjorde (med SPA-fallback till
+`index.html` för alla client-side-routes), och äger dessutom:
+
+- `POST /api/heartbeat` — tar emot `{ screenId, online, hdmiActive, readerCount }`
+  (ingen auth) och sparar senaste status per `screenId` i minnet.
+- `GET /api/heartbeat` — returnerar en array med alla kända skärmars
+  senaste status, det som `heartbeat-view.js` visar.
+
+Reverse-proxyn framför containern strippar `/_services/screens`-prefixet
+innan den vidarebefordrar (byggd `index.html` refererar redan absoluta
+asset-URL:er med hela prefixet, och nginx-konfigurationen den ersätter såg
+aldrig prefixet), så routorna i `server.js` är oprefixade: `/`, `/assets/...`,
+`/api/heartbeat`.
+
+Statusen ligger just nu bara i minnet i processen — det räcker för en
+enskild containerinstans, men om detta någon gång körs som flera repliker
+bakom en lastbalanserare känner varje replik bara till de skärmar som råkat
+träffa just den, och dashboarden blir ofullständig. Byt då `Map` mot en
+delad lagring (Redis, en databasrad, etc.).
+
+**Trailing slash:** `server.js` matchar explicit både `/api/heartbeat` och
+`/api/heartbeat/`, så det spelar ingen roll vilken kbd-bridge råkar
+konfigureras med. `urllib` (Python, används av kbd-bridge på Pi:n) och de
+flesta HTTP-klienter konverterar annars tyst en POST till en GET vid en
+301/302/303-redirect och tappar hela payloaden — det var precis så vi
+tappade heartbeats mot ett tidigare testendpoint. Om `server.js` någon gång
+byts ut mot något annat, se till att den ersättningen har samma egenskap.
 
 Bakgrundsuppdateringen är tyst och byter bara innehåll när API-svaret faktiskt ändrats. När backend stöder `ETag` eller `Last-Modified` skickar appen villkorliga headers och kan få `304 Not Modified`, vilket minskar både payload och CPU.
 
