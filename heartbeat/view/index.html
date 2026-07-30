@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<title>kbd-bridge heartbeat — test</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 2rem; background: #111; color: #eee; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #444; padding: .5rem .75rem; text-align: left; }
+  th { background: #222; }
+  .ok { color: #4caf50; }
+  .bad { color: #e53935; }
+  .stale { color: #ffb300; }
+</style>
+</head>
+<body>
+<h1>kbd-bridge heartbeat — test</h1>
+<p id="updated"></p>
+<table>
+  <thead><tr><th>Skärm</th><th>Online</th><th>HDMI</th><th>Läsare</th><th>Senast sedd</th><th>Ålder</th><th>IP</th></tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+<script>
+async function refresh() {
+  try {
+    const res = await fetch('../data/heartbeats.json?_=' + Date.now());
+    const data = await res.json();
+    const rows = document.getElementById('rows');
+    rows.innerHTML = '';
+    const now = Date.now();
+    for (const screenId of Object.keys(data).sort()) {
+      const e = data[screenId];
+      const ageSec = Math.round((now - new Date(e.receivedAt).getTime()) / 1000);
+      const staleClass = ageSec > 90 ? 'bad' : (ageSec > 45 ? 'stale' : 'ok');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${screenId}</td>
+        <td class="${e.online ? 'ok' : 'bad'}">${e.online ? 'ja' : 'nej'}</td>
+        <td class="${e.hdmiActive ? 'ok' : 'bad'}">${e.hdmiActive ? 'ja' : 'nej'}</td>
+        <td>${e.readerCount ?? '-'}</td>
+        <td>${e.receivedAt}</td>
+        <td class="${staleClass}">${ageSec}s</td>
+        <td>${e.remoteAddr ?? ''}</td>
+      `;
+      rows.appendChild(tr);
+    }
+    document.getElementById('updated').textContent = 'Uppdaterad ' + new Date().toLocaleTimeString();
+  } catch (err) {
+    document.getElementById('updated').textContent = 'Fel: ' + err;
+  }
+}
+refresh();
+setInterval(refresh, 3000);
+</script>
+</body>
+</html>
