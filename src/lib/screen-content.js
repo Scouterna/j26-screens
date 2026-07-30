@@ -139,7 +139,7 @@ function normalizeBlock(block, index) {
     return {
       id: block?.id ?? `image-${index + 1}`,
       type: 'image',
-      src: pickImageUrl(image),
+      src: pickImageUrl(image, getTargetImageWidth()),
       alt: image.alt || image.caption || 'Slide image',
       caption: image.caption || '',
       isVideo: mimeType.startsWith('video/'),
@@ -162,18 +162,40 @@ function normalizeBlock(block, index) {
   return createEmptyBlock(block?.id ?? `unsupported-${index + 1}`)
 }
 
-function pickImageUrl(image) {
-  if (!image || typeof image !== 'object') {
+function getTargetImageWidth() {
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0
+  const devicePixelRatio = window.devicePixelRatio || 1
+
+  return Math.round(viewportWidth * devicePixelRatio)
+}
+
+function pickImageUrl(image, targetWidth) {
+  const candidates = collectImageCandidates(image)
+
+  if (!candidates.length) {
     return ''
   }
 
-  return (
-    image?.sizes?.lg?.url ||
-    image?.sizes?.md?.url ||
-    image?.sizes?.sm?.url ||
-    image?.url ||
-    ''
+  if (!targetWidth) {
+    return candidates[candidates.length - 1].url
+  }
+
+  const bestFit = candidates.find((candidate) => candidate.width >= targetWidth)
+
+  return (bestFit ?? candidates[candidates.length - 1]).url
+}
+
+function collectImageCandidates(image) {
+  if (!image || typeof image !== 'object') {
+    return []
+  }
+
+  const sizeEntries = image.sizes && typeof image.sizes === 'object' ? Object.values(image.sizes) : []
+  const candidates = [...sizeEntries, { url: image.url, width: image.width }].filter(
+    (candidate) => candidate && typeof candidate.url === 'string' && candidate.url,
   )
+
+  return candidates.sort((a, b) => (a.width || Infinity) - (b.width || Infinity))
 }
 
 export function richTextToHtml(richText) {
