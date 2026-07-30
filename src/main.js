@@ -3,8 +3,10 @@ import './style.css'
 import { normalizeScreenPayload, richTextToHtml } from './lib/screen-content.js'
 import { renderSlideLayout } from './layouts/index.js'
 import { createTicker } from './ticker/index.js'
+import { renderHeartbeatView } from './heartbeat-view.js'
 
 const DEFAULT_SLUG = 'j26_default'
+const HEARTBEAT_SLUG = 'heartbeat'
 const SAME_ORIGIN_API_BASE = '/_services/cms/api/screens'
 const REMOTE_API_BASE = 'https://app.dev.j26.se/_services/cms/api/screens'
 const GLOBAL_INFO_URL = '/_services/cms/api/globals/important-info'
@@ -19,6 +21,11 @@ boot()
 function boot() {
   const params = new URLSearchParams(window.location.search)
   const rawSlug = params.get('slug')?.trim() || DEFAULT_SLUG
+
+  if (rawSlug === HEARTBEAT_SLUG) {
+    renderHeartbeatView(app)
+    return
+  }
 
   if (isComparisonSlug(rawSlug)) {
     renderComparisonView(rawSlug)

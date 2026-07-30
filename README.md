@@ -59,6 +59,34 @@ http://localhost:5173/?slug=my-screen&refreshMinutes=1
 
 Tangentbordsinput hanteras utanför webappen, till exempel via en lokal brygga på Raspberry Pi.
 
+## Heartbeat-vy
+
+`?slug=heartbeat` renderar en driftöversikt istället för en skärm (samma
+mönster som jämförelsevyn, se `isComparisonSlug` i `src/main.js`).
+Implementationen ligger i `src/heartbeat-view.js` och pollar
+`/_services/interactive-screens/api/heartbeat` var 5:e sekund via GET.
+
+```text
+http://localhost:5173/?slug=heartbeat
+```
+
+Sidan visar per skärm: online, HDMI-status, antal RFID-läsare, senaste
+heartbeat och dess ålder. Den förväntar sig ett JSON-svar som antingen är
+en array eller ett objekt keyat på `screenId`:
+
+```json
+[
+  { "screenId": "info_1_ser", "online": true, "hdmiActive": true, "readerCount": 1, "lastSeenAt": "2026-07-30T08:06:04Z" }
+]
+```
+
+**Viktigt för den som bygger den riktiga endpointen på app.jamboree.se:**
+den måste svara på både `.../api/heartbeat` och `.../api/heartbeat/`
+utan att 301/302/303-omdirigera POST mellan varianterna. `urllib` (Python,
+används av kbd-bridge på Pi:n) och de flesta HTTP-klienter konverterar
+tyst en POST till en GET vid den typen av redirect och tappar hela
+payloaden.
+
 Bakgrundsuppdateringen är tyst och byter bara innehåll när API-svaret faktiskt ändrats. När backend stöder `ETag` eller `Last-Modified` skickar appen villkorliga headers och kan få `304 Not Modified`, vilket minskar både payload och CPU.
 
 ## Hur Vite fungerar här
